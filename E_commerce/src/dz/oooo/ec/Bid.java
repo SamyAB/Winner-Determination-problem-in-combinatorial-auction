@@ -11,6 +11,7 @@ public class Bid {
 	public Bid(){
 		this.lots=new ArrayList<Short>();
 		this.gain=0;
+		this.conflict=new ArrayList<Bid>();
 	}
 
 	public ArrayList<Short> getLots() {
@@ -70,6 +71,16 @@ public class Bid {
 		else{
 			return false;
 		}
+	}
+	
+	public boolean isInConflict(ArrayList<Bid> b){
+		Iterator<Bid> bids=b.iterator();
+		while(bids.hasNext()){
+			if(this.isInConflictWith(bids.next())){
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public String toString(){

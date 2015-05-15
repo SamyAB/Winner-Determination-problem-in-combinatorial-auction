@@ -28,8 +28,8 @@ public class FormuleWDP {
 			String[] mots=ligne.split(" ");
 			this.nbLots=Short.parseShort(mots[0]);
 			this.nbBids=Short.parseShort(mots[1]);
+			ligne=br.readLine();
 			while(ligne!=null){
-				ligne=br.readLine();
 				mots=ligne.split(" ");
 				Bid bid=new Bid();
 				bid.setGain(Double.parseDouble(mots[0]));
@@ -38,6 +38,7 @@ public class FormuleWDP {
 				}
 				bid.checkAddToConflict(this.bids);
 				this.bids.add(bid);
+				ligne=br.readLine();
 			}
 			br.close();
 		} catch (FileNotFoundException e) {
@@ -80,6 +81,49 @@ public class FormuleWDP {
 			s+=bids.next().toString();
 		}
 		s+="\n";
+		return s;
+	}
+	
+	//Random key encoding algorithme modifié
+	public Solution genererRandom(){
+		Solution s=new Solution();
+		
+		//Génération du vecteur r
+		ArrayList<Integer> r=new ArrayList<Integer>();
+		for(int i=0;i<this.nbBids;i++){
+			int tmp=(int)(Math.random()*10000)%this.nbLots;
+			r.add(tmp);
+		}
+		
+		int i=this.nbBids-1;
+		while(i>=0){
+			int index=r.indexOf(i);
+			while(index==-1){
+				i--;
+				index=r.indexOf(i);
+			}
+			Bid tmp=this.bids.get(index);
+			r.set(index,-1);
+			if(!tmp.isInConflict(s.getBids())){
+				s.addBid(tmp);
+			}
+		}
+		
+		return s;	
+	}
+	
+	public Solution RechercheLocale(float wp){
+		Solution s=genererRandom();
+		for(int nbIteration=0;nbIteration<ClasseMain.getNbIteration();nbIteration++){
+			float r=(float)Math.random();
+			if(r<wp){
+				Bid bid=this.bids.get((int)(Math.random()*10000)%this.nbBids);
+			}
+			else{
+				
+			}
+		}
+		
 		return s;
 	}
 	
