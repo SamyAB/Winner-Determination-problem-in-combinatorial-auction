@@ -24,6 +24,24 @@ public class Solution {
 		this.bids.add(b);
 		this.gain+=b.getGain();
 	}
+	
+	public void forcedAddBid(Bid b){
+		Iterator<Bid> bids=this.bids.iterator();
+		ArrayList<Bid> toRemove=new ArrayList<Bid>();
+		while(bids.hasNext()){
+			Bid tmp=bids.next();
+			if(b.isInConflictWith(tmp)){
+				toRemove.add(tmp);
+				this.gain-=tmp.getGain();
+			}
+		}
+		Iterator<Bid> removes=toRemove.iterator();
+		while(removes.hasNext()){
+			this.bids.remove(removes.next());
+		}
+		this.bids.add(b);
+		this.gain+=b.getGain();
+	}
 
 	public double getGain() {
 		return gain;
@@ -39,6 +57,15 @@ public class Solution {
 		while(bids.hasNext()){
 			this.gain+=bids.next().getGain();
 		}
+	}
+	
+	public Solution clone(){
+		Solution solution=new Solution();
+		Iterator<Bid> bids=this.bids.iterator();
+		while(bids.hasNext()){
+			solution.addBid(bids.next());
+		}
+		return solution;
 	}
 	
 	public String toString(){

@@ -112,19 +112,51 @@ public class FormuleWDP {
 		return s;	
 	}
 	
-	public Solution RechercheLocale(float wp){
-		Solution s=genererRandom();
-		for(int nbIteration=0;nbIteration<ClasseMain.getNbIteration();nbIteration++){
-			float r=(float)Math.random();
-			if(r<wp){
-				Bid bid=this.bids.get((int)(Math.random()*10000)%this.nbBids);
-			}
-			else{
-				
+	public Bid bestBid(Solution s){
+		Iterator<Bid> bids=this.bids.iterator();
+		Bid bestBid= null;
+		double bestGainBid=-1000;
+		while(bids.hasNext()){
+			Bid tmp=bids.next();
+			if(!s.getBids().contains(tmp)){
+				Iterator<Bid> conflicts=tmp.getConflict().iterator();
+				double perte=0;
+				while(conflicts.hasNext()){
+					Bid tmpConflinct=conflicts.next();
+					if(s.getBids().contains(tmpConflinct)){
+						perte+=tmpConflinct.getGain();
+					}
+				}
+				double gainBid=tmp.getGain()-perte;
+				if(gainBid>bestGainBid){
+					bestGainBid=gainBid;
+					bestBid=tmp.clone();
+				}
 			}
 		}
-		
-		return s;
+		return bestBid;
+	}
+	
+	public Solution RechercheLocaleStochastique(double wp){
+		Solution s=genererRandom(),best=s.clone();
+		for(int nbIteration=0;nbIteration<ClasseMain.getNbIteration();nbIteration++){
+			Bid bid=null;
+			double r=Math.random();
+			if(r<wp){
+				bid=this.bids.get((int)(Math.random()*10000)%this.nbBids);
+			}
+			else{
+				bid=bestBid(s);
+			}
+			if(bid!=null){
+				s.forcedAddBid(bid);
+			}
+			if(s.getGain()>best.getGain()){
+				System.out.println("nouveau meilleur gain "+s.getGain());
+				best=s.clone();
+			}
+		}
+		return best;
 	}
 	
 }

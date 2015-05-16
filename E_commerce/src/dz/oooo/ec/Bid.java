@@ -64,6 +64,22 @@ public class Bid {
 		this.conflict.add(b);
 	}
 	
+	public boolean equals(Bid b){
+		if(this.gain!=b.getGain()||this.lots.size()!=b.getLots().size()){
+			return false;
+		}
+		for(int i=0;i<this.lots.size();i++){
+			if((short)(this.lots.get(i))!=(short)(b.getLots().get(i))){
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public boolean equals(Object o){
+		return this.equals((Bid) o);
+	}
+	
 	public boolean isInConflictWith(Bid b){
 		if(this.conflict.contains(b)){
 			return true;
@@ -92,5 +108,20 @@ public class Bid {
 		}
 		s+="\n";
 		return s;
+	}
+	
+	public Bid clone(){
+		Bid b=new Bid();
+		Iterator<Short> lots=this.lots.iterator();
+		while(lots.hasNext()){
+			b.addLot(lots.next());
+		}
+		Iterator<Bid> conflict=this.conflict.iterator();
+		while(conflict.hasNext()){
+			b.addConflict(conflict.next());
+		}
+		b.setGain(this.gain);
+		
+		return b;
 	}
 }

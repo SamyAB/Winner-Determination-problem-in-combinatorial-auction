@@ -5,7 +5,8 @@ public class ClasseMain {
 	
 	public static void main(String[] args) {
 		FormuleWDP f=new FormuleWDP("/mnt/Doc1/MEGAsync/m1s2/ecom/instance/in101");
-		f.RechercheLocale((float) 0.5);
+		Solution s=f.RechercheLocaleStochastique(0.1);
+		System.out.println("Solution est "+s.toString());
 	}
 
 	public static int getNbIteration() {
