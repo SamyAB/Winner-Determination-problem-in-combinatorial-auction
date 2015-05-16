@@ -115,7 +115,7 @@ public class FormuleWDP {
 	public Bid bestBid(Solution s){
 		Iterator<Bid> bids=this.bids.iterator();
 		Bid bestBid= null;
-		double bestGainBid=-1000;
+		double bestGainBid=-10000;
 		while(bids.hasNext()){
 			Bid tmp=bids.next();
 			if(!s.getBids().contains(tmp)){
@@ -137,9 +137,9 @@ public class FormuleWDP {
 		return bestBid;
 	}
 	
-	public Solution RechercheLocaleStochastique(double wp){
+	public Solution RechercheLocaleStochastique(double wp,int nbIterationsMax){
 		Solution s=genererRandom(),best=s.clone();
-		for(int nbIteration=0;nbIteration<ClasseMain.getNbIteration();nbIteration++){
+		for(int nbIteration=0;nbIteration<nbIterationsMax;nbIteration++){
 			Bid bid=null;
 			double r=Math.random();
 			if(r<wp){
@@ -156,6 +156,50 @@ public class FormuleWDP {
 				best=s.clone();
 			}
 		}
+		return best;
+	}
+	
+	public Solution rechercheTaboue(int nbIterationsMax,int tenure,int iterDiversification){
+		Solution s=genererRandom(),best=s.clone();
+		ArrayList<Bid> listeTaboue=new ArrayList<Bid>();
+		int indiceTaboue=0,iterationSansAmelioration=0;
+		for(int nbIterations=0;nbIterations<nbIterationsMax;nbIterations++){			
+			Bid bid=bestBid(s);
+			if(bid!=null && !listeTaboue.contains(bid)){
+				//Gestion de tenure liste taboue
+				if(listeTaboue.size()>=tenure){
+					listeTaboue.remove(indiceTaboue);
+				}
+
+				s.forcedAddBid(bid);
+				
+				listeTaboue.add(indiceTaboue,bid);
+				indiceTaboue=(indiceTaboue+1)%tenure;
+				
+				if(s.getGain()>best.getGain()){
+					best=s.clone();
+					iterationSansAmelioration=0;
+				}
+				else{
+					iterationSansAmelioration++;
+					if(iterationSansAmelioration>=iterDiversification){
+						//Diversification
+						s=genererRandom();
+						iterationSansAmelioration=0;
+					}
+				}
+			}
+			else{
+				iterationSansAmelioration++;
+				if(iterationSansAmelioration>=iterDiversification){
+					//Diversification
+					s=genererRandom();
+					iterationSansAmelioration=0;
+				}
+			}
+			
+		}
+		
 		return best;
 	}
 	
