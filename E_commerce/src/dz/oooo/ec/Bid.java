@@ -124,4 +124,26 @@ public class Bid {
 		
 		return b;
 	}
+
+	public Bid inverse(Solution s){
+		Iterator<Bid> conflictIterator=this.conflict.iterator();
+		Bid b=null;
+		double gp=s.getGain();
+		while(conflictIterator.hasNext()){
+			Bid tmpBid=conflictIterator.next();
+			double tmpGp=0;
+			Iterator<Bid> tmpConflict=tmpBid.getConflict().iterator();
+			while(tmpConflict.hasNext()){
+				Bid tmpTmpBid=tmpConflict.next();
+				if(s.getBids().contains(tmpTmpBid)){
+					tmpGp+=tmpTmpBid.getGain();
+				}
+			}
+			if(tmpGp<gp){
+				gp=tmpGp;
+				b=tmpBid;
+			}
+		}
+		return b;
+	}
 }
