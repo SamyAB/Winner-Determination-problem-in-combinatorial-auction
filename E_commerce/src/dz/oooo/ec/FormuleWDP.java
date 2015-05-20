@@ -149,10 +149,9 @@ public class FormuleWDP {
 				bid=bestBid(s);
 			}
 			if(bid!=null){
-				s.forcedAddBid(bid);
+				s.forcedAddBid(bid,this);
 			}
 			if(s.getGain()>best.getGain()){
-				System.out.println("nouveau meilleur gain "+s.getGain());
 				best=s.clone();
 			}
 		}
@@ -171,7 +170,7 @@ public class FormuleWDP {
 					listeTaboue.remove(indiceTaboue);
 				}
 
-				s.forcedAddBid(bid);
+				s.forcedAddBid(bid,this);
 
 				listeTaboue.add(indiceTaboue,bid);
 				indiceTaboue=(indiceTaboue+1)%tenure;
@@ -206,7 +205,7 @@ public class FormuleWDP {
 	//Méthode beeInit
 	public Solution beeInit(){
 		Solution s=new Solution();
-		ArrayList<Bid> bidsPrime=new ArrayList<>();
+		ArrayList<Bid> bidsPrime=new ArrayList<Bid>();
 		bidsPrime.addAll(this.bids);
 		while(!bidsPrime.isEmpty()){
 			double maxGain=0;
@@ -245,8 +244,10 @@ public class FormuleWDP {
 		}
 
 		//Calcule de la différence de qualité en la meilleur solution de la table dance et le précedent sRef
-		double difference=sRef.getGain()-previousSRef.getGain();
-
+		double difference=-1;
+		if(sRef!=null){
+			difference=sRef.getGain()-previousSRef.getGain();
+		}
 		//Si la meilleure solution de la table danse est meilleure que le précédant sRef
 		if(difference>0){
 			ClasseMain.setNbChances(nbChancesMax); 
@@ -255,7 +256,7 @@ public class FormuleWDP {
 			//Décrémentation du nombre de chances
 			ClasseMain.setNbChances(ClasseMain.getNbChances()-1);
 			//Si le nombre de chances restant n'est pas nul
-			if(ClasseMain.getNbChances()<=0){
+			if(ClasseMain.getNbChances()<=0 && sRef!=null){
 				//Reset du nombre de chances au nombre max de chances
 				ClasseMain.setNbChances(nbChancesMax); 
 
@@ -271,7 +272,18 @@ public class FormuleWDP {
 						sRef=tmp;
 					}
 				}
-				System.out.println("Qualité de la solution divercifiée "+sRef.getGain()+" avec une distance ="+bestDiversite);
+			}
+			if(sRef==null){
+				Iterator<Solution> searchArea=previousSRef.doubleFlipPeriodique(4).iterator();
+				ArrayList<Solution> dansePrime=new ArrayList<Solution>();
+				while(searchArea.hasNext()){
+					Solution tmp=searchArea.next();
+					//System.out.println("le meilleur voisin à un nombre de clasuses sat= "+bestVoisin.getNbClausesSat());
+					Bid b=bestBid(tmp);
+					tmp.forcedAddBid(b,this);
+					dansePrime.add(tmp);
+				}
+				sRef=choixSRef(LT, dansePrime, previousSRef, nbChancesMax);
 			}
 		}
 		return sRef;
@@ -286,9 +298,8 @@ public class FormuleWDP {
 		//Initialisations
 		ArrayList<Solution> listeTaboue=new ArrayList<Solution>();
 		int nbIteration=0;
-		int indiceTaboue=0,tailleTaboue=this.nbBids;
+		int indiceTaboue=0,tailleTaboue=40;
 		ArrayList<Solution> danse=null;
-
 		//Tant que le nombre de clause SAT est différant du nombre total de clauses
 		//Et que nombre d'itérations est inférieur au nombre max d'itération
 		while(nbIteration<nbIterationsMax){
@@ -300,10 +311,11 @@ public class FormuleWDP {
 			//Ajout de sRef à la liste taboue
 			listeTaboue.add(indiceTaboue,sRef);
 			indiceTaboue=(indiceTaboue+1)%tailleTaboue;
+			//System.out.println(sRef);
 
 			//Création de la serachArea avec un flip périodique de valeur flip
 			Iterator<Solution> searchArea=sRef.flipPeriodique(flip).iterator();
-
+			//System.out.println(searchArea.toString());
 			//Vidange/initialisation de la table danse
 			danse=new ArrayList<Solution>();
 
@@ -312,13 +324,17 @@ public class FormuleWDP {
 				Solution tmp=searchArea.next();
 				//System.out.println("le meilleur voisin à un nombre de clasuses sat= "+bestVoisin.getNbClausesSat());
 				Bid b=bestBid(tmp);
-				tmp.forcedAddBid(b);
+				tmp.forcedAddBid(b,this);
 				danse.add(tmp);
 			}
-
+			
+			
 			//Choix du prochain sRef
 			sRef=choixSRef(listeTaboue, danse, sRef,nbChancesMax);
-
+			if(sRef==null){
+				System.out.println("Diversification pas assez puissante");
+				break;
+			}
 			//Comparaison du meilleur résultat avec le nouveau sRef
 			if(sRef.getGain()>best.getGain()){
 				System.out.println("Nouvelle meilleure performance:" +sRef.getGain());

@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 public class Solution {
 	private ArrayList<Bid> bids;
+	private ArrayList<Bid> conflict;
 	private double gain;
 	private short diversite;
 
@@ -19,6 +20,8 @@ public class Solution {
 	public Solution(){
 		this.bids=new ArrayList<Bid>();
 		this.gain=0;
+		this.conflict=new ArrayList<Bid>();
+		this.diversite=0;
 	}
 
 	public ArrayList<Bid> getBids() {
@@ -32,6 +35,17 @@ public class Solution {
 	public void addBid(Bid b){
 		this.bids.add(b);
 		this.gain+=b.getGain();
+		this.concatConflict(b);
+	}
+	
+	public void concatConflict(Bid b){
+		Iterator<Bid> conflictIterator=b.getConflict().iterator();
+		while(conflictIterator.hasNext()){
+			Bid tmp=conflictIterator.next();
+			if(!this.conflict.contains(tmp)){
+				this.conflict.add(tmp);
+			}
+		}
 	}
 
 	public void forcedAddBid(Bid b){
@@ -48,8 +62,23 @@ public class Solution {
 		while(removes.hasNext()){
 			this.bids.remove(removes.next());
 		}
+		
+		this.setConflict();
+
 		this.bids.add(b);
+		this.concatConflict(b);
 		this.gain+=b.getGain();
+	}
+	
+	public void forcedAddBid(Bid b,FormuleWDP f){
+		this.forcedAddBid(b);
+		Iterator<Bid> bidsIterator=f.getBids().iterator();
+		while(bidsIterator.hasNext()){
+			Bid tmp=bidsIterator.next();
+			if(!this.conflict.contains(tmp)){
+				this.addBid(tmp);
+			}
+		}
 	}
 
 	public double getGain() {
@@ -100,10 +129,11 @@ public class Solution {
 			short distance=0;
 
 			//Compare chaque littéral de la solution au littéral corréspendant de l'élément de la liste taboue
-			for(int i=0;i<this.bids.size();i++){
+			for(int i=0;i<this.bids.size() && i<tmp.getBids().size();i++){
 				if(!this.bids.get(i).equals(tmp.getBids().get(i))){
 					distance++;
 				}
+				distance+=Math.abs(this.bids.size()-tmp.getBids().size());
 			}
 			if(distance<diversite){
 				diversite=distance;
@@ -137,16 +167,54 @@ public class Solution {
 		Solution s=(Solution) o;
 		return this.equals(s);
 	}
+	
+	public String getIds(){
+		String s="";
+		Iterator<Bid> bidsIterator=this.bids.iterator();
+		while(bidsIterator.hasNext()){
+			s+=bidsIterator.next().getId()+", ";
+		}
+		s+="\n";
+		return s;
+	}
 
 	public ArrayList<Solution> flipPeriodique(int flip) {
 		ArrayList<Solution> searchArea=new ArrayList<Solution>();
-		for(int i=0;i>flip;i++){
+		for(int i=0;i<flip;i++){
 			Solution s=this.clone();
-			for(int j=0;j*flip+i<this.bids.size();j++){
+			for(int j=0;j*flip+i<s.bids.size();j++){
 				s.forcedAddBid(s.bids.get(j*flip+i).inverse(s));
 			}
 			searchArea.add(s);
 		}
 		return searchArea;
+	}
+	
+	public ArrayList<Solution> doubleFlipPeriodique(int flip){
+		ArrayList<Solution> searchArea=new ArrayList<Solution>();
+		for(int i=0;i<flip;i++){
+			Solution s=this.clone();
+			for(int j=0;j*flip+i<s.bids.size();j++){
+				s.forcedAddBid(s.bids.get(j*flip+i).inverse(s));
+				s.forcedAddBid(s.bids.get(j*flip+i).inverse(s));
+			}
+			searchArea.add(s);
+		}
+		return searchArea;
+	}
+
+	public ArrayList<Bid> getConflict() {
+		return conflict;
+	}
+
+	public void setConflict(ArrayList<Bid> conflict) {
+		this.conflict = conflict;
+	}
+	
+	public void setConflict(){
+		Iterator<Bid> bidsIterator=this.bids.iterator();
+		while(bidsIterator.hasNext()){
+			this.concatConflict(bidsIterator.next());
+		}
 	}
 }

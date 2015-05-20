@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class Bid {
+	private static int nbBids=0;
+	private int id;
 	private ArrayList<Short> lots;
 	private ArrayList<Bid> conflict;
 	private double gain;
@@ -12,6 +14,9 @@ public class Bid {
 		this.lots=new ArrayList<Short>();
 		this.gain=0;
 		this.conflict=new ArrayList<Bid>();
+		this.conflict.add(this);
+		nbBids++;
+		this.setId(nbBids);
 	}
 
 	public ArrayList<Short> getLots() {
@@ -100,7 +105,7 @@ public class Bid {
 	}
 	
 	public String toString(){
-		String s="Gain = "+this.gain+"\n";
+		String s=this.id+" : Gain = "+this.gain+"\n";
 		s+="Lots :";
 		Iterator<Short> lots=this.lots.iterator();
 		while(lots.hasNext()){
@@ -121,7 +126,8 @@ public class Bid {
 			b.addConflict(conflict.next());
 		}
 		b.setGain(this.gain);
-		
+		nbBids--;
+		b.setId(this.id);
 		return b;
 	}
 
@@ -131,6 +137,7 @@ public class Bid {
 		double gp=s.getGain();
 		while(conflictIterator.hasNext()){
 			Bid tmpBid=conflictIterator.next();
+			
 			double tmpGp=0;
 			Iterator<Bid> tmpConflict=tmpBid.getConflict().iterator();
 			while(tmpConflict.hasNext()){
@@ -139,11 +146,20 @@ public class Bid {
 					tmpGp+=tmpTmpBid.getGain();
 				}
 			}
-			if(tmpGp<gp){
+			if(tmpGp<gp && !tmpBid.equals(this)){
 				gp=tmpGp;
 				b=tmpBid;
 			}
 		}
+
 		return b;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 }
